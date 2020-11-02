@@ -5,6 +5,7 @@ using Azure.Search.Documents;
 using Azure.Search.Documents.Indexes;
 using Azure.Search.Documents.Indexes.Models;
 using Azure.Search.Documents.Models;
+using Spectre.Console;
 
 namespace ASDemo.Console
 {
@@ -21,7 +22,9 @@ namespace ASDemo.Console
             var searchIndexClient = new SearchIndexClient(serviceEndpoint, credential);
             var searchClient = new SearchClient(serviceEndpoint, indexName, credential);
 
-            System.Console.WriteLine("-- Demo start ---");
+            if (AnsiConsole.Capabilities.SupportLinks)
+                AnsiConsole.MarkupLine($"[link=https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo]Demo for index {indexName}[/]!");
+
             var index = new SearchIndex(indexName)
             {
                 Fields =
@@ -36,13 +39,13 @@ namespace ASDemo.Console
                 }
             };
             
-            System.Console.WriteLine("Creating index....");
+            HorizontalRule("Creating index");
             await searchIndexClient.CreateOrUpdateIndexAsync(index);
-            System.Console.WriteLine("Index is created");
 
+            HorizontalRule("Adding data to the index");
             await AddDataAsync(searchClient);
+            HorizontalRule("Executing search queries");
             await QueryDataAsync(searchClient);
-            System.Console.WriteLine("-- Demo finished --");
             System.Console.WriteLine("--> press any field to exit");
             System.Console.Read();
         }
@@ -132,14 +135,29 @@ namespace ASDemo.Console
         
         private static void WriteDocuments(SearchResults<SearchModel> searchResults)
         {
+            var table = new Table()
+                .Border(TableBorder.Square)
+                .BorderColor(Color.Red)
+                .Title("Search results")
+                .AddColumn(new TableColumn("[u]ID[/]").Centered())
+                .AddColumn(new TableColumn("[u]Value[/]"))
+                .AddColumn(new TableColumn("[u]Polish[/]"));
+            
             foreach (var response in searchResults.GetResults())
             {
                 var doc = response.Document;
                 var score = response.Score;
-                System.Console.WriteLine($"ID: {doc.Id}\tValue: {doc.Name}\tPolish: {doc.PolishName}");
+                table.AddRow(new Text(doc.Id).Centered(), new Text(doc.Name), new Markup($"[red]{doc.KeyPhrases}[/]"));
             }
 
-            System.Console.WriteLine("");
+            AnsiConsole.Render(table);
+        }
+        
+        private static void HorizontalRule(string title)
+        {
+            AnsiConsole.WriteLine();
+            AnsiConsole.Render(new Rule($"[white bold]{title}[/]").RuleStyle("grey").LeftAligned());
+            AnsiConsole.WriteLine();
         }
     }
 }
