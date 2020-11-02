@@ -48,13 +48,13 @@ namespace ASDemo.Console
             HorizontalRule("Executing search queries");
 
             await QueryDataAsync(searchClient);
-            System.Console.WriteLine("--> press any field to exit");
+            AnsiConsole.WriteLine("--> press any field to exit");
             System.Console.Read();
         }
 
         private static async Task QueryDataAsync(SearchClient searchClient)
         {
-            System.Console.WriteLine("Query #1: Find css in all fields...");
+            HorizontalRule("Query #1: Find css in all fields...");
             var options = new SearchOptions
             {
                 Filter = "",
@@ -64,7 +64,7 @@ namespace ASDemo.Console
             var response = await searchClient.SearchAsync<SearchModel>("css", options);
             WriteDocuments(response);
 
-            System.Console.WriteLine("Query #2: search with OData filters");
+            HorizontalRule("Query #2: search with OData filters");
 
             options = new SearchOptions
             {
@@ -74,7 +74,7 @@ namespace ASDemo.Console
             response = await searchClient.SearchAsync<SearchModel>("*", options);
             WriteDocuments(response);
 
-            System.Console.WriteLine("Query #3: search with polish version");
+            HorizontalRule("Query #3: search with polish version");
 
             options = new SearchOptions
             {
@@ -149,7 +149,9 @@ namespace ASDemo.Console
             {
                 var doc = response.Document;
                 var score = response.Score;
-                table.AddRow(new Text(doc.Id).Centered(), new Text(doc.Name), new Markup($"[red]{doc.KeyPhrases}[/]"));
+                table.AddRow(new Text(doc.Id).Centered(),
+                    new Text(doc.Name),
+                    new Markup(doc.PolishName, Style.Plain));
             }
 
             AnsiConsole.Render(table);
