@@ -41,12 +41,21 @@ namespace ASDemo.Console
             };
 
             HorizontalRule("Creating index");
+            AnsiConsole.WriteLine("Creating or updating index, if changed");
             await searchIndexClient.CreateOrUpdateIndexAsync(index);
+            AnsiConsole.WriteLine("Operation completed!");
 
             HorizontalRule("Adding data to the index");
-            await AddDataAsync(searchClient);
+            var addingData = Environment.GetEnvironmentVariable("AddingData");
+            bool.TryParse(addingData, out bool addData);
+            if (addData)
+            {
+                AnsiConsole.WriteLine($"Adding data to the search index in index {indexName}");
+                await AddDataAsync(searchClient);
+                AnsiConsole.WriteLine("Completed adding data");
+            }
+            
             HorizontalRule("Executing search queries");
-
             await QueryDataAsync(searchClient);
             AnsiConsole.WriteLine("--> press any field to exit");
             System.Console.Read();
@@ -68,7 +77,7 @@ namespace ASDemo.Console
 
             options = new SearchOptions
             {
-                Filter = "name eq 'css'",
+                Filter = "name eq 'styles'",
             };
 
             response = await searchClient.SearchAsync<SearchModel>("*", options);
@@ -82,7 +91,7 @@ namespace ASDemo.Console
                 OrderBy = {"updated desc"}
             };
 
-            response = await searchClient.SearchAsync<SearchModel>("magnesow", options);
+            response = await searchClient.SearchAsync<SearchModel>("magnesow*", options);
             WriteDocuments(response);
         }
 
