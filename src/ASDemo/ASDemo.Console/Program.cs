@@ -41,58 +41,77 @@ namespace ASDemo.Console
             };
 
             HorizontalRule("Creating index");
+            
             AnsiConsole.WriteLine("Creating or updating index, if changed");
             await searchIndexClient.CreateOrUpdateIndexAsync(index);
             AnsiConsole.WriteLine("Operation completed!");
 
-            HorizontalRule("Adding data to the index");
             var addingData = Environment.GetEnvironmentVariable("AddingData");
             bool.TryParse(addingData, out bool addData);
+            
             if (addData)
             {
-                AnsiConsole.WriteLine($"Adding data to the search index in index {indexName}");
+                HorizontalRule("Adding data to the index");
+                AnsiConsole.WriteLine($"Adding data to the search index in {indexName}");
                 await AddDataAsync(searchClient);
                 AnsiConsole.WriteLine("Completed adding data");
             }
             
             HorizontalRule("Executing search queries");
-            await QueryDataAsync(searchClient);
-            AnsiConsole.WriteLine("--> press any field to exit");
-            System.Console.Read();
-        }
-
-        private static async Task QueryDataAsync(SearchClient searchClient)
-        {
-            HorizontalRule("Query #1: Find css in all fields...");
-            var options = new SearchOptions
-            {
-                Filter = "",
-                OrderBy = {"name"}
-            };
-
-            var response = await searchClient.SearchAsync<SearchModel>("css", options);
-            WriteDocuments(response);
-
-            HorizontalRule("Query #2: search with OData filters");
-
-            options = new SearchOptions
+            AnsiConsole.WriteLine("Query #1: Using OData queries");
+            
+            var queryManager = new QueryManager();
+            var response = await queryManager.QueryDataAsync(searchClient,"*",new SearchOptions
             {
                 Filter = "name eq 'styles'",
-            };
-
-            response = await searchClient.SearchAsync<SearchModel>("*", options);
+                IncludeTotalCount = true
+            });
+            
             WriteDocuments(response);
 
-            HorizontalRule("Query #3: search with polish version");
-
-            options = new SearchOptions
+            HorizontalRule("Query #2: search with polish version");
+            response = await queryManager.QueryDataAsync(searchClient,"plik",new SearchOptions
             {
                 Filter = "",
-                OrderBy = {"updated desc"}
-            };
-
-            response = await searchClient.SearchAsync<SearchModel>("magnesow*", options);
+                OrderBy = {"updated desc"},
+                IncludeTotalCount = true
+            });
+            
             WriteDocuments(response);
+            
+            HorizontalRule("Query #3: search keywords");
+            response = await queryManager.QueryDataAsync(searchClient,"EF04",new SearchOptions
+            {
+                OrderBy = {"updated desc"},
+                IncludeTotalCount = true
+            });
+            
+            WriteDocuments(response);
+            
+            HorizontalRule("Query #4: fuzzy search");
+            response = await queryManager.QueryDataAsync(searchClient,"sytles~",new SearchOptions
+            {
+                SearchMode = SearchMode.Any,
+                QueryType = SearchQueryType.Full,
+                OrderBy = {"updated desc"},
+                IncludeTotalCount = true
+            });
+            
+            WriteDocuments(response);
+            
+            HorizontalRule("Query #5: fielded search");
+            response = await queryManager.QueryDataAsync(searchClient,"keyPhrases:cycle OR keyPhrases:tag",new SearchOptions
+            {
+                SearchMode = SearchMode.Any,
+                QueryType = SearchQueryType.Full,
+                OrderBy = {"updated desc"},
+                IncludeTotalCount = true
+            });
+            
+            WriteDocuments(response);
+
+            AnsiConsole.WriteLine("--> press any field to exit");
+            System.Console.Read();
         }
 
         private static async Task AddDataAsync(SearchClient searchClient)
