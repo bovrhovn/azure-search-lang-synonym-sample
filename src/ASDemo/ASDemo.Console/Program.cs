@@ -23,7 +23,8 @@ namespace ASDemo.Console
             var searchClient = new SearchClient(serviceEndpoint, indexName, credential);
 
             if (AnsiConsole.Capabilities.SupportLinks)
-                AnsiConsole.MarkupLine($"[link=https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo]Demo for index {indexName}[/]!");
+                AnsiConsole.MarkupLine(
+                    $"[link=https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo]Demo for index {indexName}[/]!");
 
             var index = new SearchIndex(indexName)
             {
@@ -35,16 +36,17 @@ namespace ASDemo.Console
                     new SearchableField("polishName") {IsFilterable = true, IsSortable = true},
                     new SimpleField("updated", SearchFieldDataType.DateTimeOffset)
                         {IsFilterable = true, IsSortable = true},
-                    new SearchableField("keyPhrases") {IsFilterable = true, IsSortable = true}
+                    new SearchableField("keyPhrases", true) {IsFilterable = true}
                 }
             };
-            
+
             HorizontalRule("Creating index");
             await searchIndexClient.CreateOrUpdateIndexAsync(index);
 
             HorizontalRule("Adding data to the index");
             await AddDataAsync(searchClient);
             HorizontalRule("Executing search queries");
+
             await QueryDataAsync(searchClient);
             System.Console.WriteLine("--> press any field to exit");
             System.Console.Read();
@@ -56,7 +58,7 @@ namespace ASDemo.Console
             var options = new SearchOptions
             {
                 Filter = "",
-                OrderBy = { "Name" }
+                OrderBy = {"name"}
             };
 
             var response = await searchClient.SearchAsync<SearchModel>("css", options);
@@ -77,29 +79,29 @@ namespace ASDemo.Console
             options = new SearchOptions
             {
                 Filter = "",
-                OrderBy = { "updated desc" }
+                OrderBy = {"updated desc"}
             };
 
             response = await searchClient.SearchAsync<SearchModel>("magnesow", options);
             WriteDocuments(response);
         }
-        
+
         private static async Task AddDataAsync(SearchClient searchClient)
         {
             var translator = new Translator();
 
             string modelName1 = "external styles are defined withing the element, inside the section of an HTML page";
             string polishModelName1 = await translator.GetTranslatedTextAsync(modelName1);
-            string[] keyWords1 = new[] {"CSS", "styles","metadata","element","EF01"};
+            string[] keyWords1 = {"CSS", "styles", "metadata", "element", "EF01"};
             string modelName2 = "To include an external JavaScript file, use the script tag with the attribute src";
             string polishModelName2 = await translator.GetTranslatedTextAsync(modelName2);
-            string[] keyWords2 = new[] {"javascript", "EF02","script","tag","src"};
+            string[] keyWords2 = {"javascript", "EF02", "script", "tag", "src"};
             string modelName3 = "Move to the home position";
             string polishModelName3 = await translator.GetTranslatedTextAsync(modelName3);
-            string[] keyWords3 = new[] {"storage", "container","EF03","home"};
+            string[] keyWords3 = {"storage", "container", "EF03", "home"};
             string modelName4 = "removal of stuck magnets restores machine cycle";
             string polishModelName4 = await translator.GetTranslatedTextAsync(modelName4);
-            string[] keyWords4 = new[] {"magnets", "machine","cycle","EF04"};
+            string[] keyWords4 = {"magnets", "machine", "cycle", "EF04"};
 
             var batch = IndexDocumentsBatch.Create(
                 IndexDocumentsAction.Upload(new SearchModel
@@ -132,7 +134,7 @@ namespace ASDemo.Console
 
             await searchClient.IndexDocumentsAsync(batch, new IndexDocumentsOptions {ThrowOnAnyError = true});
         }
-        
+
         private static void WriteDocuments(SearchResults<SearchModel> searchResults)
         {
             var table = new Table()
@@ -142,7 +144,7 @@ namespace ASDemo.Console
                 .AddColumn(new TableColumn("[u]ID[/]").Centered())
                 .AddColumn(new TableColumn("[u]Value[/]"))
                 .AddColumn(new TableColumn("[u]Polish[/]"));
-            
+
             foreach (var response in searchResults.GetResults())
             {
                 var doc = response.Document;
@@ -152,7 +154,7 @@ namespace ASDemo.Console
 
             AnsiConsole.Render(table);
         }
-        
+
         private static void HorizontalRule(string title)
         {
             AnsiConsole.WriteLine();

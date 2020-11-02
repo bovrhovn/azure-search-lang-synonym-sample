@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
@@ -12,7 +11,7 @@ namespace ASDemo.Console
         public async Task<string> GetTranslatedTextAsync(string textToTranslate, string from = "en", string to = "pl")
         {
             var subscriptionKey = Environment.GetEnvironmentVariable("CognitiveServicesSubscriptionKey");
-            string route = $"/translate?api-version=3.0&from={from}&to={to}";
+            string route = $"translate?api-version=3.0&from={from}&to={to}";
             var body = new object[] {new {Text = textToTranslate}};
             var requestBody = JsonConvert.SerializeObject(body);
 
@@ -25,6 +24,7 @@ namespace ASDemo.Console
             };
 
             request.Headers.Add("Ocp-Apim-Subscription-Key", subscriptionKey);
+            request.Headers.Add("Ocp-Apim-Subscription-Region", "westeurope");
             var response = await client.SendAsync(request).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
@@ -34,28 +34,27 @@ namespace ASDemo.Console
             }
 
             var translatedText = await response.Content.ReadAsStringAsync();
-            var translatorModel = JsonConvert.DeserializeObject<TranslatorModel>(translatedText);
-            if (translatorModel.Translations.Count > 0)
-                return translatorModel.Translations[0].Data[0].Text;
+            var translatorModel = JsonConvert.DeserializeObject<TranslationModel[]>(translatedText);
+            if (translatorModel.Length > 0)
+                return translatorModel[0].Translations[0].Text;
             
             System.Console.WriteLine("No translation returned. Check data and service");
             return string.Empty;
         }
     }
 
-    class Translation
+    public class TranslationModel
     {
-        [JsonProperty("text")] public string Text { get; set; }
-        [JsonProperty("to")] public string To { get; set; }
+        [JsonProperty("translations")]
+        public Translation[] Translations { get; set; }
     }
 
-    class Translations
+    public class Translation
     {
-        [JsonProperty("translations")] public List<Translation> Data { get; set; }
-    }
+        [JsonProperty("text")]
+        public string Text { get; set; }
 
-    class TranslatorModel
-    {
-        public List<Translations> Translations { get; set; }
+        [JsonProperty("to")]
+        public string To { get; set; }
     }
 }
