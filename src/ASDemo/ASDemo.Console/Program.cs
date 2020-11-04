@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Search.Documents;
@@ -14,7 +17,7 @@ namespace ASDemo.Console
         static async Task Main(string[] args)
         {
             var serviceName = Environment.GetEnvironmentVariable("AzureSearchName");
-            var indexName = "models";
+            var indexName = "modelmaps";
             var apiKey = Environment.GetEnvironmentVariable("AzureSearchKey");
 
             var serviceEndpoint = new Uri($"https://{serviceName}.search.windows.net/");
@@ -25,6 +28,8 @@ namespace ASDemo.Console
             if (AnsiConsole.Capabilities.SupportLinks)
                 AnsiConsole.MarkupLine(
                     $"[link=https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo]Demo for index {indexName}[/]!");
+
+            HorizontalRule("Creating index with synonym maps");
 
             var index = new SearchIndex(indexName)
             {
@@ -40,15 +45,22 @@ namespace ASDemo.Console
                 }
             };
 
-            HorizontalRule("Creating index");
-            
             AnsiConsole.WriteLine("Creating or updating index, if changed");
             await searchIndexClient.CreateOrUpdateIndexAsync(index);
-            AnsiConsole.WriteLine("Operation completed!");
+            AnsiConsole.WriteLine("Index updated, off to synonym maps!");
+
+            // applying synonym maps to get the same result
+            if (searchIndexClient.GetSynonymMapNames().Value.Contains("name-map"))
+                searchIndexClient.DeleteSynonymMap("name-map");
+            
+            //it is separated only by \n due to SOLR format
+            string nameSynonyms = "css=>design\nsource,src\ndata=>storage";
+            var synonmMap = new SynonymMap("name-map", nameSynonyms);
+            await searchIndexClient.CreateOrUpdateSynonymMapAsync(synonmMap);
 
             var addingData = Environment.GetEnvironmentVariable("AddingData");
             bool.TryParse(addingData, out bool addData);
-            
+
             if (addData)
             {
                 HorizontalRule("Adding data to the index");
@@ -56,60 +68,42 @@ namespace ASDemo.Console
                 await AddDataAsync(searchClient);
                 AnsiConsole.WriteLine("Completed adding data");
             }
-            
-            HorizontalRule("Executing search queries");
-            AnsiConsole.WriteLine("Query #1: Using OData queries");
-            
-            var queryManager = new QueryManager();
-            var response = await queryManager.QueryDataAsync(searchClient,"*",new SearchOptions
-            {
-                Filter = "name eq 'styles'",
-                IncludeTotalCount = true
-            });
-            
-            WriteDocuments(response);
 
-            HorizontalRule("Query #2: search with polish version");
-            response = await queryManager.QueryDataAsync(searchClient,"plik",new SearchOptions
+            HorizontalRule("Executing search with(out) synonym maps");
+            AnsiConsole.WriteLine("Query #1: Searching for data value (without synonyms)");
+
+            var queryManager = new QueryManager();
+            var response = await queryManager.QueryDataAsync(searchClient, "data", new SearchOptions
             {
                 Filter = "",
-                OrderBy = {"updated desc"},
                 IncludeTotalCount = true
             });
-            
-            WriteDocuments(response);
-            
-            HorizontalRule("Query #3: search keywords");
-            response = await queryManager.QueryDataAsync(searchClient,"EF04",new SearchOptions
-            {
-                OrderBy = {"updated desc"},
-                IncludeTotalCount = true
-            });
-            
-            WriteDocuments(response);
-            
-            HorizontalRule("Query #4: fuzzy search");
-            response = await queryManager.QueryDataAsync(searchClient,"sytles~",new SearchOptions
-            {
-                SearchMode = SearchMode.Any,
-                QueryType = SearchQueryType.Full,
-                OrderBy = {"updated desc"},
-                IncludeTotalCount = true
-            });
-            
-            WriteDocuments(response);
-            
-            HorizontalRule("Query #5: fielded search");
-            response = await queryManager.QueryDataAsync(searchClient,"keyPhrases:cycle OR keyPhrases:tag",new SearchOptions
-            {
-                SearchMode = SearchMode.Any,
-                QueryType = SearchQueryType.Full,
-                OrderBy = {"updated desc"},
-                IncludeTotalCount = true
-            });
-            
+
             WriteDocuments(response);
 
+            HorizontalRule("Query #2: Searching for data value (with synonyms)");
+            index.Fields.First(d => d.Name == "name").SynonymMapNames.Add("name-map");
+            index.Fields.First(d => d.Name == "keyPhrases").SynonymMapNames.Add("name-map");
+            await searchIndexClient.CreateOrUpdateIndexAsync(index);
+            AnsiConsole.WriteLine("Index updated with Synonym Map....");
+            
+            response = await queryManager.QueryDataAsync(searchClient, "data", new SearchOptions
+            {
+                Filter = "",
+                IncludeTotalCount = true
+            });
+
+            WriteDocuments(response);
+
+            HorizontalRule("Query #3: Searching for design value - it doesn't exists (with synonyms)");
+            response = await queryManager.QueryDataAsync(searchClient, "design", new SearchOptions
+            {
+                Filter = "",
+                IncludeTotalCount = true
+            });
+            
+            WriteDocuments(response);
+            
             AnsiConsole.WriteLine("--> press any field to exit");
             System.Console.Read();
         }
