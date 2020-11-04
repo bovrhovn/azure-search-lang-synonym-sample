@@ -12,6 +12,8 @@ Demo requires 2 services in order to test the functionality:
 
 Translator is used for translating text from english to polish language (when data is pushed to newly created index). [Method](https://github.com/bovrhovn/azure-search-lang-synonym-sample/blob/main/src/ASDemo/ASDemo.Console/Translator.cs) is written in a way, that accepts language from and language to and can be easily changed. 
 
+For **synonym maps example** check [synonym branch](https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/synonyms).
+
 ## Demo run
 
 In order to run the demo, you will need [.NET Core 3.1](https://dot.net) installed. You need to clone this repository, open terminal, navigate into [ASDemo.Console](https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo/ASDemo.Console) directory (locate *csproj* file). Execute dotnet run command to run the solution. 
