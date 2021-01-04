@@ -11,8 +11,8 @@ namespace ASDemo.Console
         [JsonPropertyName("name")]
         public string Name { get; set; }
 
-        [JsonPropertyName("polishName")]
-        public string PolishName { get; set; }
+        [JsonPropertyName("underscore")]
+        public string Underscore { get; set; }
 
         [JsonPropertyName("updated")]
         public DateTime Updated { get; set; }
