@@ -1,33 +1,30 @@
 # Azure Cognitive Search - demo about using Azure Search to query keywords
 
-Sample includes creating and filling in data, including fuzzy search,field limited text and language translation service to have the ability to search in multiple languages as well.
+Sample includes creating and filling in data / working with search [analyzers](https://docs.microsoft.com/en-us/azure/search/search-analyzers).
 
 ## Demo Walkthrough
 
 In order for the demo to work, you will need an active subscription for cloud platform [Azure](https://azure.com). 
 
-Demo requires 2 services in order to test the functionality:
-- [Azure Search](https://docs.microsoft.com/en-us/azure/search/search-what-is-azure-search) 
-- Azure Cognitive Services, specifically [Translation Service](https://docs.microsoft.com/en-us/azure/cognitive-services/Translator/translator-info-overview)
+Demo requires [Azure Search](https://docs.microsoft.com/en-us/azure/search/search-what-is-azure-search) in order to test the functionality.
 
-Translator is used for translating text from english to polish language (when data is pushed to newly created index). [Method](https://github.com/bovrhovn/azure-search-lang-synonym-sample/blob/main/src/ASDemo/ASDemo.Console/Translator.cs) is written in a way, that accepts language from and language to and can be easily changed. 
+In order to test the functionality, you can use **free version** of Azure Search service.
 
 ## Demo run
 
-In order to run the demo, you will need [.NET Core 3.1](https://dot.net) installed. You need to clone this repository, open terminal, navigate into [ASDemo.Console](https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/main/src/ASDemo/ASDemo.Console) directory (locate *csproj* file). Execute dotnet run command to run the solution. 
+In order to run the demo, you will need [.NET Core 3.1](https://dot.net) installed. You need to clone this repository, open terminal, navigate into [ASDemo.Console](https://github.com/bovrhovn/azure-search-lang-synonym-sample/tree/analyzers/src/ASDemo/ASDemo.Console) directory (locate *csproj* file). Execute dotnet run command to run the solution. 
 
-Before you run the solution, you need to provide settings:
-- Azure search Key - you get it from Azure Search Service blade **Keys**
-- Azure Search Name - - you get it from Azure Search Service blade **Keys**
-- Cognitive Services Key - - you get it from Azure Cognitive Services blade **Keys and Endpoint**
-- bool settings, where you define, if data should be uploaded to index - **true** - inserts data - **false**, skips insertion
+Before you run the solution, you need to provide few settings:
+- Azure Search Key - you get it from Azure Search Service blade **Keys**
+- Azure Search Name - - you get it from Azure Search Service blade **Keys** 
+- bool setting **AddData** to define, if data should be uploaded to index - **true** - inserts data - **false**, skips insertion
 
-![environment variables](https://csacoresettings.blob.core.windows.net/public/search-keyword-environment-variables.png)
+The best way to set the settings is to set the [environment variables](https://en.wikipedia.org/wiki/Environment_variable).  
 
-Depends on which editor you use or operating system you are testing this, environment variables are set.
+![Settings](https://camo.githubusercontent.com/40f92e89700cc3ad393d69becd837b8f453ed02634217a759dbcbad8dd9fe26c/68747470733a2f2f637361636f726573657474696e67732e626c6f622e636f72652e77696e646f77732e6e65742f7075626c69632f7365617263682d6b6579776f72642d656e7669726f6e6d656e742d7661726961626c65732e706e67)
 
 You should see the following result: 
-![environment variables](https://csacoresettings.blob.core.windows.net/public/azure-search-synonym-map-output.png)
+
 
 ## Credits
 

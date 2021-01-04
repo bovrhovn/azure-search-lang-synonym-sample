@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Azure;
 using Azure.Search.Documents;
@@ -36,21 +37,31 @@ namespace ASDemo.Console
                         {IsKey = true, IsFilterable = true, IsSortable = true},
                     new SearchableField("name")
                     {
-                        IsFilterable = true, IsSortable = true
+                        IsFilterable = true, IsSortable = true, AnalyzerName = "luceneStandardAnalyzer"
                     },
                     new SearchableField("polishName") {IsFilterable = true, IsSortable = true},
-                    new SearchableField("underscore") {IsFilterable = true, IsSortable = true},
+                    new SearchableField("underscore")
+                    {
+                        IsFilterable = true, IsSortable = true,
+                        AnalyzerName = "my_underscore_analyzer"
+                    },
                     new SimpleField("updated", SearchFieldDataType.DateTimeOffset)
                         {IsFilterable = true, IsSortable = true},
                     new SearchableField("keyPhrases", true) {IsFilterable = true}
-                }
+                },
+                CharFilters = {new PatternReplaceCharFilter("underscore_char", "_", " ") }
             };
 
             //add analyzer to the index
             index.Analyzers.Add(new LuceneStandardAnalyzer("luceneStandardAnalyzer"));
 
+            var customAnalyzer = new CustomAnalyzer("my_underscore_analyzer", LexicalTokenizerName.Pattern);
+            customAnalyzer.CharFilters.Add("underscore_char");
+
+            index.Analyzers.Add(customAnalyzer);
+
             AnsiConsole.WriteLine("Creating or updating index, if changed");
-            
+
             //In order to add new analyzers, tokenizers, token filters, or character filters to an existing index, or modify its similarity settings,
             //set the 'allowIndexDowntime' query parameter to 'true' in the index update request
             await searchIndexClient.CreateOrUpdateIndexAsync(index, true);
@@ -74,13 +85,14 @@ namespace ASDemo.Console
                 return data;
             }
 
-            HorizontalRule("Executing search");
-
-            AnsiConsole.WriteLine("Query #1: Searching for styles value");
+            HorizontalRule("Query #1: Searching for styles value");
 
             var stylesText = "styles";
 
-            AnalyzeText(searchIndexClient, indexName, stylesText);
+            var analyzeText = await searchIndexClient.AnalyzeTextAsync(indexName, new AnalyzeTextOptions(stylesText,
+                LexicalTokenizerName.Standard));
+
+            OutputAnalyzeText(analyzeText, indexName, stylesText);
 
             var response = await QueryDataAsync(stylesText, new SearchOptions
             {
@@ -90,11 +102,16 @@ namespace ASDemo.Console
 
             WriteDocuments(response);
 
-            AnsiConsole.WriteLine("Query #2: Searching for text jquery");
+            HorizontalRule("Query #2: Searching for text jquery");
 
             var jqueryText = "jquery";
-            AnalyzeText(searchIndexClient, indexName, jqueryText);
-            
+            var analyzeTextOptions =
+                new AnalyzeTextOptions(stylesText, LexicalAnalyzerName.Pattern);
+
+            analyzeText = await searchIndexClient.AnalyzeTextAsync(indexName, analyzeTextOptions);
+
+            OutputAnalyzeText(analyzeText, indexName, jqueryText);
+
             response = await QueryDataAsync(jqueryText, new SearchOptions
             {
                 Filter = "",
@@ -109,36 +126,41 @@ namespace ASDemo.Console
 
         private static void OutputIndexLexicalAnaylsis(SearchIndex index)
         {
-            HorizontalRule("Showing lexical analysis");
-
-            AnsiConsole.WriteLine("Showing analyzers");
+            string text = "";
 
             foreach (var analyzer in index.Analyzers)
             {
-                AnsiConsole.WriteLine($"[u]{analyzer.Name}[/]");
+                text+=$"[b]{analyzer.Name}[/]{Environment.NewLine}";
             }
 
             AnsiConsole.WriteLine("Show tokenizers for index");
 
             foreach (var lexicalTokenizer in index.Tokenizers)
             {
-                AnsiConsole.WriteLine($"[u]{lexicalTokenizer.Name}[/]");
+                text+=$"[b]{lexicalTokenizer.Name}[/]{Environment.NewLine}";
             }
 
             AnsiConsole.WriteLine("Show char filters");
 
             foreach (var charFilter in index.CharFilters)
             {
-                AnsiConsole.WriteLine($"[u]{charFilter.Name}[/]");
+                text+=$"[b]{charFilter.Name}[/]";
             }
+            
+            var panel = new Panel(new Markup(text))
+                .Expand()
+                .AsciiBorder()
+                .Header("Lexical analysis")
+                .HeaderAlignment(Justify.Center);
+            
+            AnsiConsole.Render(panel);
         }
 
-        private static void AnalyzeText(SearchIndexClient client, string indexName, string stylesText)
+        private static void OutputAnalyzeText(Response<IReadOnlyList<AnalyzedTokenInfo>> analyzeText,
+            string indexName, string stylesText)
         {
             AnsiConsole.WriteLine($"Analyzing query text {stylesText}");
-            
-            var analyzeText = client.AnalyzeText(indexName, new AnalyzeTextOptions(stylesText,
-                LexicalTokenizerName.Standard));
+
             var table = new Table()
                 .Border(TableBorder.Square)
                 .BorderColor(Color.Red)
