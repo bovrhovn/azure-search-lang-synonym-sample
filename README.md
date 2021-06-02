@@ -22,7 +22,7 @@ Before you run the solution, you need to provide settings:
 - Cognitive Services Key - you get it from Azure Cognitive Services blade **Keys and Endpoint**
 - bool settings **AddData** - set **true**, if data should be uploaded to index (doesn't have check, if data exists, will add data) or if set **false**, skips insertion
 
-![environment variables](https://csacoresettings.blob.core.windows.net/public/search-keyword-environment-variables.png)
+![environment variables](https://webeudatastorage.blob.core.windows.net/web/search-keyword-environment-variables.png)
 
 The easiest way to define app settings is to leverage [environment variables](https://en.wikipedia.org/wiki/Environment_variable).
 
