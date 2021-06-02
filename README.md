@@ -22,12 +22,12 @@ Before you run the solution, you need to provide settings:
 - Cognitive Services Key - - you get it from Azure Cognitive Services blade **Keys and Endpoint**
 - bool settings, where you define, if data should be uploaded to index - **true** - inserts data - **false**, skips insertion
 
-![environment variables](https://csacoresettings.blob.core.windows.net/public/search-keyword-environment-variables.png)
+![environment variables](https://webeudatastorage.blob.core.windows.net/web/search-keyword-environment-variables.png)
 
 Depends on which editor you use or operating system you are testing this, environment variables are set.
 
 You should see the following result: 
-![environment variables](https://csacoresettings.blob.core.windows.net/public/azure-search-synonym-map-output.png)
+![environment variables](https://webeudatastorage.blob.core.windows.net/web/azure-search-synonym-map-output.png)
 
 ## Credits
 
